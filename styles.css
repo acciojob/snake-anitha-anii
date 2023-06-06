@@ -21,6 +21,8 @@
 
         .snakeBodyPixel {
             background-color: green;
+			display:flex;
+			flex-wrap:wrap;
         }
 
         .scoreBoard {
