@@ -36,15 +36,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // Draw the snake
     snake.forEach((pixel, index) => {
       const snakePixel = createPixel(index, "snakeBodyPixel");
-      snakePixel.style.top = `${pixel.row * pixelSize}px`;
-      snakePixel.style.left = `${pixel.col * pixelSize}px`;
+      snakePixel.style.top = `${(pixel.row - 1) * pixelSize}px`;
+      snakePixel.style.left = `${(pixel.col - 1) * pixelSize}px`;
       gameContainer.appendChild(snakePixel);
     });
 
     // Draw the food
     const foodPixel = createPixel("food", "food");
-    foodPixel.style.top = `${food.row * pixelSize}px`;
-    foodPixel.style.left = `${food.col * pixelSize}px`;
+    foodPixel.style.top = `${(food.row - 1) * pixelSize}px`;
+    foodPixel.style.left = `${(food.col - 1) * pixelSize}px`;
     gameContainer.appendChild(foodPixel);
 
     // Update the score
