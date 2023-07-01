@@ -1,123 +1,149 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const gameContainer = document.getElementById("gameContainer");
-  const scoreElement = document.getElementById("score");
-  const gridSize = 10; // Number of rows and columns in the grid
-  const pixelSize = 40;
-  const snakeSpeed = 100;
 
-  let snake = [
-    { row: 2, col: 5 },
-    { row: 2, col: 4 },
-    { row: 2, col: 3 }
-  ];
-  let direction = "right";
-  let food = { row: 5, col: 7 };
-  let score = 0;
+let inputDir = { x: 0, y: 0 };
+const gameSound = new Audio('music1.mp3');
+const foodSound = new Audio('food.mp3');
+const moveSound = new Audio('move.mp3');
+const gameoverSound = new Audio('gameover.mp3');
+let speed = 6;
+let score = 0;
+let lastPaintTime = 0;
+let snakeArr = [{ x: 1, y: 1 }];
+food = { x: 6, y: 8 };
 
-  function createPixel(id, className) {
-    const pixel = document.createElement("div");
-    pixel.id = `pixel${id}`;
-    pixel.className = className;
-    return pixel;
-  }
+// Game function : 
+function main(currtime) {
+    window.requestAnimationFrame(main);
+    if ((currtime - lastPaintTime) / 1000 < 1 / speed) {
+        return;
+    }
+    lastPaintTime = currtime;
+    gameEngine();
+}
 
-  function draw() {
-    // Clear the game container
-    gameContainer.innerHTML = "";
+function isCollide(snake) {
+    // if snake eats himself
+    for (let i = 1; i < snakeArr.length; i++) {
+        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+            return true;
+        }
+    }
+    if ((snake[0].x >= 30 || snake[0].x <= 0) || snake[0].y >= 30 || snake[0].y <= 0) {
+        return true;
+    }
+    return false;
+}
 
-    // Draw the grid
-    for (let row = 1; row <= gridSize; row++) {
-      for (let col = 1; col <= gridSize; col++) {
-        const gridPixel = createPixel(`${row}-${col}`, "pixel");
-        gameContainer.appendChild(gridPixel);
-      }
+function gameEngine() {
+    // part 1 : updating the snake array and food
+
+    if (isCollide(snakeArr)) {
+        gameoverSound.play();
+        gameSound.pause();
+        inputDir = { x: 0, y: 0 };
+        alert("Game Over. Press any key to Start again!");
+        snakeArr = [{ x: 1, y: 1 }];
+        score = 0;
+        speed = 4;
+        scoreBox.innerHTML = "Score : " + score;
     }
 
-    // Draw the snake
-    snake.forEach((pixel, index) => {
-      const snakePixel = createPixel(index, "snakeBodyPixel");
-      snakePixel.style.top = `${(pixel.row - 1) * pixelSize}px`;
-      snakePixel.style.left = `${(pixel.col - 1) * pixelSize}px`;
-      gameContainer.appendChild(snakePixel);
-    });
+    // If snake eats food, increase the score and regenerate food
+    if (snakeArr[0].y === food.y && snakeArr[0].x === food.x) {
+        foodSound.play();
+        score += 1;
 
-    // Draw the food
-    const foodPixel = createPixel("food", "food");
-    foodPixel.style.top = `${(food.row - 1) * pixelSize}px`;
-    foodPixel.style.left = `${(food.col - 1) * pixelSize}px`;
-    gameContainer.appendChild(foodPixel);
+        let hs = 100;
+        for (let i = 5; i <= hs; i += 5) {
+            if (score >= i) {
+                speed += 2;
+            }
+        }
 
-    // Update the score
-    scoreElement.textContent = score;
-  }
+        if (score > hiscoreval) {
+            hiscoreval = score;
+            localStorage.setItem("hiscore", JSON.stringify(hiscoreval));
+            hiscoreBox.innerHTML = "Max Score : " + hiscoreval;
+        }
 
-  function moveSnake() {
-    const head = { ...snake[0] };
-
-    if (direction === "right") {
-      head.col++;
-    } else if (direction === "left") {
-      head.col--;
-    } else if (direction === "up") {
-      head.row--;
-    } else if (direction === "down") {
-      head.row++;
+        scoreBox.innerHTML = "Score :" + score;
+        snakeArr.unshift({ x: snakeArr[0].x + inputDir.x, y: snakeArr[0].y + inputDir.y });
+        let a = 1;
+        let b = 29;
+        food = { x: Math.round(a + (b - a) * Math.random()), y: Math.round(a + (b - a) * Math.random()) }
     }
 
-    snake.unshift(head);
-
-    if (head.row === food.row && head.col === food.col) {
-      score++;
-      generateFood();
-    } else {
-      snake.pop();
+    // Moving the snake
+    for (let i = snakeArr.length - 2; i >= 0; i--) {
+        snakeArr[i + 1] = { ...snakeArr[i] };  //dot for not getting reference problem, use it as new object.
     }
+    snakeArr[0].x += inputDir.x;
+    snakeArr[0].y += inputDir.y;
 
-    if (head.row < 1 || head.row > gridSize || head.col < 1 || head.col > gridSize) {
-      gameOver();
+    // ******************
+    // part 2 : display the snake and food
+
+    // display the snake
+    board.innerHTML = "";
+    snakeArr.forEach((element, index) => {
+        snakeElement = document.createElement('div');
+        snakeElement.style.gridRowStart = element.y;
+        snakeElement.style.gridColumnStart = element.x;
+        snakeElement.classList.add('head');
+        board.appendChild(snakeElement);
+    })
+
+    // display the food
+    foodElement = document.createElement('div');
+    foodElement.style.gridRowStart = food.y;
+    foodElement.style.gridColumnStart = food.x;
+    foodElement.classList.add('food');
+    board.appendChild(foodElement);
+}
+
+// ******************
+// Main logic here
+
+let hiscore = localStorage.getItem("hiscore");
+if (hiscore === null) {
+    hiscoreval = 0;
+    localStorage.setItem("hiscore", JSON.stringify(hiscoreval))
+}
+else {
+    hiscoreval = JSON.parse(hiscore);
+    hiscoreBox.innerHTML = "Max Score : " + hiscore;
+}
+
+window.requestAnimationFrame(main);
+window.addEventListener('keydown', element => {
+    inputDir = { x: 0, y: 1 } // to start the game
+    gameSound.play();
+    moveSound.play();
+    switch (element.key) {
+        case "ArrowUp":
+            console.log("ArrowUp");
+            inputDir.x = 0;
+            inputDir.y = -1;
+            break;
+
+        case "ArrowDown":
+            console.log("ArrowDown");
+            inputDir.x = 0;
+            inputDir.y = 1;
+            break;
+
+        case "ArrowLeft":
+            console.log("ArrowLeft");
+            inputDir.x = -1;
+            inputDir.y = 0;
+            break;
+
+        case "ArrowRight":
+            console.log("ArrowRight");
+            inputDir.x = 1;
+            inputDir.y = 0;
+            break;
+
+        default:
+            break;
     }
-
-    draw();
-  }
-
-  function changeDirection(event) {
-    const key = event.keyCode;
-    const leftKey = 37;
-    const upKey = 38;
-    const rightKey = 39;
-    const downKey = 40;
-
-    if (key === leftKey && direction !== "right") {
-      direction = "left";
-    } else if (key === upKey && direction !== "down") {
-      direction = "up";
-    } else if (key === rightKey && direction !== "left") {
-      direction = "right";
-    } else if (key === downKey && direction !== "up") {
-      direction = "down";
-    }
-  }
-
-  function generateFood() {
-    food = {
-      row: Math.floor(Math.random() * gridSize) + 1,
-      col: Math.floor(Math.random() * gridSize) + 1
-    };
-
-    snake.forEach(pixel => {
-      if (pixel.row === food.row && pixel.col === food.col) {
-        generateFood();
-      }
-    });
-  }
-
-  function gameOver() {
-    clearInterval(gameInterval);
-    alert("Game Over!");
-  }
-
-  document.addEventListener("keydown", changeDirection);
-  generateFood();
-  draw();
-  const gameInterval = setInterval(moveSnake, snakeSpeed);
-});
+})
