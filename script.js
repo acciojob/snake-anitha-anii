@@ -1,4 +1,3 @@
-
 let inputDir = { x: 0, y: 0 };
 const gameSound = new Audio('music1.mp3');
 const foodSound = new Audio('food.mp3');
